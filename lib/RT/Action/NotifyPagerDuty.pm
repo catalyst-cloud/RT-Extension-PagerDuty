@@ -35,37 +35,45 @@ sub Commit {
     my $self = shift;
 
     my $api_token = RT->Config->Get('PagerDutyAPIToken');
+    my $routing_key = RT->Config->Get('PagerDutyRoutingKey');
 
-    my $endpoint = "https://api.pagerduty.com/incidents";
-
-    my $payload = {
-        incident => {
-            from         => RT->Config->Get('PagerDutyFrom'),
-            title        => $self->TicketObj->Subject,
-            incident_key => '' . $self->TicketObj->id,
-        },
-    };
+    my $endpoint = "https://events.pagerduty.com/v2/enqueue";
 
     my $ticket = $self->TicketObj;
     my $queue  = $ticket->QueueObj;
 
-    my $queue_priority_cf_name = RT->Config->Get('PagerDutyQueueCFPriority') || 'Incident Priority ID';
+    my $queue_priority_cf_name = RT->Config->Get('PagerDutyQueueCFPriority') || 'Incident Priority';
     my $queue_priority = $queue->FirstCustomFieldValue($queue_priority_cf_name);
 
+    # Set the priority to what PagerDuty supports.
     if ($queue_priority) {
-        $payload->{'incident'}{'priority'} = {
-            id   => $queue_priority,
-            type => 'priority_reference',
-        };
+        $queue_priority = lc($queue_priority);
+        if ($queue_priority !~ /^critical|warning|error|info$/) {
+            $RT::Logger->error("Pager Duty priority is $queue_priority, which isn't supported by PD, changing to critical");
+            $queue_priority = 'critical';
+        }
     }
 
-    my $queue_service_cf_name = RT->Config->Get('PagerDutyQueueCFService') || 'Incident Service ID';
+    my $queue_service_cf_name = RT->Config->Get('PagerDutyQueueCFService') || 'Incident Service';
     my $queue_service = $queue->FirstCustomFieldValue($queue_service_cf_name);
 
-    $payload->{'incident'}{'service'} = {
-        id   => $queue_service,
-        type => 'service_reference',
+    my $payload = {
+        routing_key  => $routing_key,
+        event_action => 'trigger',
+        dedup_key    => '' . $self->TicketObj->id,
+        payload => {
+            summary  => $self->TicketObj->Subject,
+            source   => $queue_service  || 'RT',
+            severity => $queue_priority || 'critical',
+        },
+        links => [
+            {
+                href => RT->Config->Get('WebBaseURL') . '/' . $ticket->id,
+                text => 'RT Ticket',
+            },
+        ],
     };
+
 
     my $payload_json = JSON::encode_json($payload); 
 
@@ -74,7 +82,6 @@ sub Commit {
 
     $RT::Logger->info('Creating incident on PagerDuty');
     my $post_response = $ua->post($endpoint,
-        'Authorization' => 'Token token=' . $api_token,
         'Accept'        => 'application/vnd.pagerduty+json;version=2',
         'Content-Type'  => 'application/json',
         'Content'       => $payload_json,
@@ -84,23 +91,15 @@ sub Commit {
         # Add reference to CF
         my $response = JSON::decode_json($post_response->decoded_content);
 
-        my $pd_html_cf = $self->TicketObj->CustomField('PagerDuty HTML');
-        if ($pd_html_cf) {
-            $self->Ticket->AddCustomFieldValue(
-                Field => $pd_html_cf,
-                Value => $response->{'incident'}{'html_url'},
-            );
-        }
-
-        $self->TicketObj->Comment(
-             Content => 'Allocated in PagerDuty to ' . $response->{'incident'}{'assignee'}{'summary'},
+        $ticket->Comment(
+             Content => 'Response from PagerDuty: ' . $response->{'message'} . "\nstatus: " . $response->{'status'},
         );
     } else { 
-        $RT::Logger->error('Failed to create incident on PagerDuty ('. 
-            $post_response->code .': '. $post_response->message .')'); 
+        $RT::Logger->error('Failed to create incident on PagerDuty (',
+            $post_response->code ,': ', $post_response->message, ', json: ', $post_response->decoded_content, ')');
 
-        $self->TicketObj->Comment(
-             Content => 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content,
+        $ticket->Comment(
+             Content => 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content
         );
     }
 
