@@ -1,0 +1,7 @@
+@ScripActions = (
+  {
+    Name        => 'Notify PagerDuty',
+    Description => 'Create an incident in PagerDuty',
+    ExecModule  => 'NotifyPagerDuty',
+  },
+);
