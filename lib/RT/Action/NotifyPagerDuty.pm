@@ -85,10 +85,10 @@ sub Commit {
     };
 
 
-    my $payload_json = JSON::encode_json($payload); 
+    my $payload_json = JSON::encode_json($payload);
 
-    my $ua = LWP::UserAgent->new(); 
-    $ua->timeout(10); 
+    my $ua = LWP::UserAgent->new();
+    $ua->timeout(10);
 
     $RT::Logger->info('Creating incident on PagerDuty');
     my $post_response = $ua->post($endpoint,
@@ -98,11 +98,11 @@ sub Commit {
     );
 
     my $txn_content;
-    if ($post_response->is_success) { 
+    if ($post_response->is_success) {
         my $response = JSON::decode_json($post_response->decoded_content);
 
         $txn_content = 'Response from PagerDuty: ' . $response->{'message'} . "\nStatus from PagerDuty: " . $response->{'status'};
-    } else { 
+    } else {
         $RT::Logger->error('Failed to create incident on PagerDuty (',
             $post_response->code ,': ', $post_response->message, ', json: ', $post_response->decoded_content, ')');
 
