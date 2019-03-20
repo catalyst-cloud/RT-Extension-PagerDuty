@@ -6,7 +6,7 @@ use JSON;
 package RT::Action::NotifyPagerDuty;
 use base qw(RT::Action);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # To install, run:
 #    rt-setup-database --action insert --datafile db/initialdata
@@ -25,6 +25,7 @@ our $VERSION = '0.01';
 #
 # Create a Queue CustomField called 'PD Incident Service ID', which ID for PD service.
 
+# As we use a custom RT::Transaction, we need to add our _BriefDescription.
 {
     package RT::Transaction;
     our %_BriefDescriptions;
@@ -108,32 +109,20 @@ sub Commit {
         $txn_content = 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content;
     }
 
-    $self->_NewTransaction(
-        Ticket  => $ticket,
-        Content => $txn_content,
+    # We need to give RT::Record::_NewTransaction a MIME object to have it
+    # store our content for us.
+    my $MIMEObj = MIME::Entity->build(
+        Type    => "text/plain",
+        Charset => "UTF-8",
+        Data    => [ Encode::encode("UTF-8", $txn_content) ],
+    );
+
+    $ticket->_NewTransaction(
+        Type => 'PagerDuty-Create',
+        MIMEObj => $MIMEObj,
     );
 
     return 1;
 }
 
-sub _NewTransaction {
-    my $self = shift;
-
-    my %args = (
-        Content => '',
-        Ticket  => undef,
-        @_
-    );
-
-    my $data = ref $args{'Content'}? $args{'Content'} : [ $args{'Content'} ];
-    my $MIMEObj = MIME::Entity->build(
-        Type    => "text/plain",
-        Charset => "UTF-8",
-        Data    => [ map {Encode::encode("UTF-8", $_)} @{$data} ],
-    );
-
-    $args{'Ticket'}->_NewTransaction(
-        Type => 'PagerDuty-Create',
-        MIMEObj => $MIMEObj,
-    );
-}
+1;
