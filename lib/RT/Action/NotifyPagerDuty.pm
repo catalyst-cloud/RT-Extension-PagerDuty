@@ -25,6 +25,15 @@ our $VERSION = '0.01';
 #
 # Create a Queue CustomField called 'PD Incident Service ID', which ID for PD service.
 
+{
+    package RT::Transaction;
+    our %_BriefDescriptions;
+
+    $_BriefDescriptions{"PagerDuty-Create"} = sub {
+        return "Event created in PagerDuty";
+    };
+}
+
 sub Prepare {
     my $shelf = shift;
 
@@ -87,21 +96,44 @@ sub Commit {
         'Content'       => $payload_json,
     );
 
+    my $txn_content;
     if ($post_response->is_success) { 
-        # Add reference to CF
         my $response = JSON::decode_json($post_response->decoded_content);
 
-        $ticket->Comment(
-             Content => 'Response from PagerDuty: ' . $response->{'message'} . "\nstatus: " . $response->{'status'},
-        );
+        $txn_content = 'Response from PagerDuty: ' . $response->{'message'} . "\nStatus from PagerDuty: " . $response->{'status'};
     } else { 
         $RT::Logger->error('Failed to create incident on PagerDuty (',
             $post_response->code ,': ', $post_response->message, ', json: ', $post_response->decoded_content, ')');
 
-        $ticket->Comment(
-             Content => 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content
-        );
+        $txn_content = 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content;
     }
 
+    $self->_NewTransaction(
+        Ticket  => $ticket,
+        Content => $txn_content,
+    );
+
     return 1;
+}
+
+sub _NewTransaction {
+    my $self = shift;
+
+    my %args = (
+        Content => '',
+        Ticket  => undef,
+        @_
+    );
+
+    my $data = ref $args{'Content'}? $args{'Content'} : [ $args{'Content'} ];
+    my $MIMEObj = MIME::Entity->build(
+        Type    => "text/plain",
+        Charset => "UTF-8",
+        Data    => [ map {Encode::encode("UTF-8", $_)} @{$data} ],
+    );
+
+    $args{'Ticket'}->_NewTransaction(
+        Type => 'PagerDuty-Create',
+        MIMEObj => $MIMEObj,
+    );
 }
