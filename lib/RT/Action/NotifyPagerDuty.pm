@@ -12,8 +12,8 @@ our $VERSION = '0.02';
 #    rt-setup-database --action insert --datafile db/initialdata
 
 # Create for example a scrip with:
-#   Description: Create PagerDuty Incident
-#   Condition:   On Create
+#   Description: Create or Update PagerDuty Incident
+#   Condition:   On Transaction
 #   Action:      Notify PagerDuty
 #   Template:    Blank
 #   Stage:       Normal
