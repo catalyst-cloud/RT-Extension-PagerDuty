@@ -8,22 +8,127 @@ use base qw(RT::Action);
 
 our $VERSION = '0.02';
 
-# To install, run:
-#    rt-setup-database --action insert --datafile db/initialdata
+=head1 NAME
 
-# Create for example a scrip with:
-#   Description: Create or Update PagerDuty Incident
-#   Condition:   On Transaction
-#   Action:      Notify PagerDuty
-#   Template:    Blank
-#   Stage:       Normal
-#   Enabled:     Yes
-#
-# Then assign that scrip to the queues which you want to notify PagerDuty.
-# If you create a CustomField called 'Incident Priority' for the queue, then
-# you can set the priority that is assigned in PagerDuty.
-#
-# Create a Queue CustomField called 'PD Incident Service ID', which ID for PD service.
+RT-Action-NotifyPagerDuty - Create or update an incident in PagerDuty
+
+=head1 DESCRIPTION
+
+This action allows you to create or update incidents in PagerDuty
+when a ticket is created or updated in Request Tracker.
+
+=head1 RT VERSION
+
+Works with RT 4.4.x, not tested with 4.6.x yet.
+
+=head1 INSTALLATION
+
+=over
+
+=item C<perl Makefile.PL>
+
+=item C<make>
+
+=item C<make install>
+
+May need root permissions
+
+=item C<rt-setup-database --action insert --datafile db/initialdata>
+
+May need root permissions
+
+=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
+
+Add this line:
+
+    Plugin('RT::Action::NotifyPagerDuty');
+
+In PagerDuty.com add a new service, selection "Use our API directly" and
+select "Events API v2" and whatever other settings you need. Take the routing
+key they generate and add a line like this:
+
+    Set ($PagerDutyRoutingKey, 'key_goes_here');
+
+Other settings you may want to add, with their defaults:
+
+    Set ($PagerDutyQueueCFService, 'Incident Service');
+
+=item Restart your webserver
+
+=item In RT, you need to create a new Scrip
+
+Create for example a scrip with:
+
+    Description: Create or Update PagerDuty Incident
+    Condition:   On Transaction
+    Action:      Notify PagerDuty
+    Template:    Blank
+    Stage:       Normal
+    Enabled:     Yes
+
+Then assign that scrip to the queues which you want to notify PagerDuty.
+
+=back
+
+=head1 CONFIGURATION
+
+There are only a few settings that can be configured.
+
+Currently you can set the PagerDuty priority and services to be used
+via Queue CustomFields.
+
+=over
+
+=item Priority
+
+The PagerDuty incident priority which this incident will be created using.
+
+By default the Queue CustomField is named "Incident Priority", but you can
+change that with:
+
+    Set ($PagerDutyQueueCFPriority, 'Incident Priority');
+
+The allowed values are: critical, warning, error, or info.
+
+If no priority is set, or an invalid value is used, critical will be used.
+
+=item Service
+
+The PagerDuty service which this incident will be created using.
+
+By default the Queue CustomField is named "Incident Service", but you can
+change that with:
+
+    Set ($PagerDutyQueueCFService, 'Incident Service');
+
+If no service is defined, then RT is used.
+
+=back
+
+=head1 AUTHOR
+
+Andrew Ruthven, Catalyst Cloud Ltd E<lt>puck@catalystcloud.nz<gt>
+
+=for html <p>All bugs should be reported via email to <a
+href="mailto:bug-RT-Action-NotifyPagerDuty@rt.cpan.org">bug-RT-Action-NotifyPagerDuty@rt.cpan.org</a>
+or via the web at <a
+href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty">rt.cpan.org</a>.</p>
+
+=for text
+    All bugs should be reported via email to
+        bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+    or via the web at
+        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+
+=head1 LICENSE AND COPYRIGHT
+
+This software is Copyright (c) 2019 by Catalyst Cloud Ltd
+
+This is free software, licensed under:
+
+  The GNU General Public License, Version 2, June 1991
+
+=cut
 
 # As we use a custom RT::Transaction, we need to add our _BriefDescription.
 {
