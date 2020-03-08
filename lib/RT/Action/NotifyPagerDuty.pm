@@ -220,6 +220,7 @@ sub Commit {
     return 1;
 }
 
+# Use the Events v2 API: https://v2.developer.pagerduty.com/docs/events-api-v2
 sub _PDEnqueue {
     my $self = shift;
     my %args = (
@@ -273,11 +274,16 @@ sub _PDEnqueue {
             $post_response->code ,': ', $post_response->message, ', json: ', $post_response->decoded_content, ')');
 
         $txn_content = 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content;
+
+        if ($post_response->code != 400) {
+            # Queue the request up for a retransmit.
+        }
     }
 
     return $txn_content;
 }
 
+# Use the Incident API: https://api-reference.pagerduty.com/#!/Incidents/get_incidents
 sub _PDCreationAPI {
     my $self = shift;
     my %args = (
@@ -302,14 +308,18 @@ sub _PDCreationAPI {
 
     my $payload = {
         incident => {
-            type    => "incident",
+            type    => 'incident',
             title   => $self->TicketObj->Subject,
             from    => $queue_from,
             service => {
                 id   => $args{queue_service},
-                type => "service_reference"
+                type => 'service_reference',
             },
             incident_key => 'rt#' . $self->TicketObj->id,
+            body    => {
+                type    => 'incident_body',
+                details => RT->Config->Get('WebBaseURL') . '/' . $self->TicketObj->id,
+            },
         },
     };
 
@@ -379,6 +389,8 @@ sub _PDCreationAPI {
             $post_response->code ,': ', $post_response->message, ', json: ', $post_response->decoded_content, ')');
 
         $txn_content = 'Failed to create incident in PagerDuty: ' . $post_response->message . "\n" . $post_response->decoded_content;
+
+        # TODO: Cache to disk for later attempt.
     }
 
 
