@@ -182,10 +182,13 @@ sub Commit {
     my ($result, $error) = $self->_pagerduty_submit($pd_action);
     if (! defined $result) {
         $RT::Logger->error("Failed to raise incident on Pager Duty, error: $error");
-        return 1;
+        $pretty_action = 'rejected';
+    } elsif ($result eq 'defer') {
+        $RT::Logger->info("Deferred attempting to raise incident on Pager Duty");
+        $pretty_action = 'deferred';
+    } else {
+        $RT::Logger->info("Successfully raised incident on Pager Duty, dedup_key: $result");
     }
-
-    $RT::Logger->info("Successfully raised incident on Pager Duty, dedup_key: $result");
 
     # We need to give RT::Record::_NewTransaction a MIME object to have it
     # store our content for us.
