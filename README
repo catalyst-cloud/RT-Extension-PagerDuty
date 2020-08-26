@@ -1,0 +1,92 @@
+NAME
+    RT-Action-NotifyPagerDuty - Create or update an incident in PagerDuty
+
+DESCRIPTION
+    This action allows you to create or update incidents in PagerDuty when a
+    ticket is created or updated in Request Tracker.
+
+RT VERSION
+    Works with RT 4.4.x, not tested with 5.0.x yet.
+
+INSTALLATION
+    perl Makefile.PL
+    make
+    make install
+        May need root permissions
+
+    rt-setup-database --action insert --datafile db/initialdata
+        May need root permissions
+
+    Edit your /opt/rt4/etc/RT_SiteConfig.pm
+        Add this line:
+
+            Plugin('RT::Action::NotifyPagerDuty');
+
+        In PagerDuty.com add a new service, selection "Use our API directly"
+        and select "Events API v2" and whatever other settings you need.
+        Take the routing key they generate and add a line like this:
+
+            Set ($PagerDutyRoutingKey, 'key_goes_here');
+
+        Other settings you may want to add, with their defaults:
+
+            Set ($PagerDutyQueueCFService, 'Incident Service');
+
+    Restart your webserver
+    In RT, you need to create a new Scrip
+        Create for example a scrip with:
+
+            Description: Create or Update PagerDuty Incident
+            Condition:   On Transaction
+            Action:      Notify PagerDuty
+            Template:    Blank
+            Stage:       Normal
+            Enabled:     Yes
+
+        Then assign that scrip to the queues which you want to notify
+        PagerDuty.
+
+CONFIGURATION
+    There are only a few settings that can be configured.
+
+    Currently you can set the PagerDuty priority and services to be used via
+    Queue CustomFields.
+
+    Priority
+        The PagerDuty incident priority which this incident will be created
+        using.
+
+        By default the Queue CustomField is named "Incident Priority", but
+        you can change that with:
+
+            Set ($PagerDutyQueueCFPriority, 'Incident Priority');
+
+        The allowed values are: critical, warning, error, or info.
+
+        If no priority is set, or an invalid value is used, critical will be
+        used.
+
+    Service
+        The PagerDuty service which this incident will be created using.
+
+        By default the Queue CustomField is named "Incident Service", but
+        you can change that with:
+
+            Set ($PagerDutyQueueCFService, 'Incident Service');
+
+        If no service is defined, then RT is used.
+
+AUTHOR
+    Andrew Ruthven, Catalyst Cloud Ltd <puck@catalystcloud.nz<gt>
+
+    All bugs should be reported via email to
+        bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+    or via the web at
+        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+LICENSE AND COPYRIGHT
+    This software is Copyright (c) 2019 by Catalyst Cloud Ltd
+
+    This is free software, licensed under:
+
+      The GNU General Public License, Version 2, June 1991
+
