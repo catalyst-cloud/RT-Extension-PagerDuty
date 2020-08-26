@@ -123,7 +123,7 @@ href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
 
 =head1 LICENSE AND COPYRIGHT
 
-This software is Copyright (c) 2019 by Catalyst Cloud Ltd
+This software is Copyright (c) 2019-2020 by Catalyst Cloud Ltd
 
 This is free software, licensed under:
 
