@@ -32,6 +32,5 @@ substitute(
     qw(bin/rt-flush-pagerduty),
 );
 
-auto_install;
 sign;
 WriteAll;
