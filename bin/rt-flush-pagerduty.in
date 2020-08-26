@@ -85,4 +85,48 @@ sub run {
     RT::Logger->info("Flush run of PagerDuty notifications finished");
 }
 
+__END__
+
+=head1 NAME
+
+rt-flush-pagerduty - flush any spooled submissions for PagerDuty from Request Tracker
+
+=head1 SYNOPSIS
+
+    rt-flush-pagerduty
+
+=head1 DESCRIPTION
+
+Flush any spooled submissions for PagerDuty. This should be run from cron as
+a user which can read the Request Tracker configuration files and manage
+files in the spool directory.
+
+=head1 AUTHOR
+
+Andrew Ruthven, Catalyst Cloud Ltd E<lt>puck@catalystcloud.nzE<gt>
+
+=for html <p>All bugs should be reported via email to <a
+href="mailto:bug-RT-Action-NotifyPagerDuty@rt.cpan.org">bug-RT-Action-NotifyPage
+rDuty@rt.cpan.org</a>
+or via the web at <a
+href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+">rt.cpan.org</a>.</p>
+
+=for text
+    All bugs should be reported via email to
+        bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+    or via the web at
+        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDu
+ty
+
+=head1 LICENSE AND COPYRIGHT
+
+This software is Copyright (c) 2019-2020 by Catalyst Cloud Ltd
+
+This is free software, licensed under:
+
+  The GNU General Public License, Version 2, June 1991
+
+=cut
+
 1;
