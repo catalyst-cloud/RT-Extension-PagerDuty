@@ -57,15 +57,19 @@ sub run {
         (my $ticket_id = $dedup_key) =~ s/rt#//;
         $ticket->Load($ticket_id);
 
+        my $txn_content;
         if ($result eq 'defer') {
             RT::Logger->info("PagerDuty notification for $dedup_key deferred again");
             $pretty_action = 'deferred';
+            $txn_content = "Failed $rt_action incident in PagerDuty, deferred again";
         } elsif if ($result eq 'submitted') {
             RT::Logger->info("PagerDuty notification for $dedup_key submitted");
             $pretty_action = 'submitted';
+            $txn_content = "Succeeded in $rt_action incident in PagerDuty";
         } else {
             RT::Logger->info("PagerDuty notification for $dedup_key rejected: $result");
             $pretty_action = 'rejected';
+            $txn_content = "Failed $rt_action incident in PagerDuty, rejected.";
         }
 
         # We need to give RT::Record::_NewTransaction a MIME object to have it
