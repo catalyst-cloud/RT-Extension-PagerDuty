@@ -120,6 +120,20 @@ To set:
 If you spool submissions then you should run rt-flush-pagerduty regularly,
 for example from cron. No arguments are required for rt-flush-pagerduty.
 
+=item Include SubjectTag
+
+Prefix the summary if the incident submitted to PagerDuty with the
+Request Tracker SubjectTag for the queue the ticket is in. This is
+to allow an email address for RT (either correspond or comment) in the
+notification set within PagerDuty to allow updates from PagerDuty to
+be added to RT.
+
+By default this is disabled.
+
+To enable:
+
+    Set ($PagerDutyIncludeSubjectTag, 1);
+
 =back
 
 =head1 AUTHOR
@@ -132,6 +146,7 @@ or via the web at <a
 href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty">rt.cpan.org</a>.</p>
 
 =for text
+
     All bugs should be reported via email to
         bug-RT-Action-NotifyPagerDuty@rt.cpan.org
     or via the web at
@@ -275,9 +290,17 @@ sub _trigger_event {
                                  || 'Incident Service';
     my $queue_service  = $queue->FirstCustomFieldValue($queue_service_cf_name);
 
+    # Should we include the SubjectTag in the incident raised in PagerDuty?
+    # This will allow emails out of PagerDuty to be added to a ticket in RT.
+    my $include_subject_tag = RT->Config->Get('PagerDutyIncludeSubjectTag')
+                              || 0;
+
     my $result = $agent->trigger_event(
         dedup_key => $dedup_key,
-        summary   => $self->TicketObj->Subject,
+        summary   => ($include_subject_tag
+                         ? $self->TicketObj->SubjectTag . ' '
+                         : ''
+                     ) . $self->TicketObj->Subject,
         source    => $queue_service  || 'RT',
         severity  => $queue_priority || 'critical',
         class     => 'Ticket',
