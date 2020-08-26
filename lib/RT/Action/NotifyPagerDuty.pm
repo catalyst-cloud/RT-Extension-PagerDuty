@@ -154,12 +154,13 @@ sub Commit {
     #  - new, trigger an incident;
     #  - resolved, rejected or deleted, , resolve an incident;
     # If the owner is set, acknowledge the incident.
-    my ($pd_action, $pretty_action);
+    my ($pd_action, $pretty_action, $rt_action);
     my $txnObj = $self->TransactionObj;
 
     if ($txnObj->Type eq 'Create') {
         $pd_action     = 'trigger';
         $pretty_action = 'triggered';
+        $rt_action     = 'creating';
 
     } elsif ($txnObj->Type eq 'Status'
              && $txnObj->OldValue !~ /^resolved|rejected|deleted$/
@@ -167,6 +168,7 @@ sub Commit {
             ) {
         $pd_action     = 'resolve';
         $pretty_action = 'resolved';
+        $rt_action     = 'updating';
 
     } elsif ($txnObj->Type eq 'Set'
              && $txnObj->Field eq 'Owner'
@@ -174,20 +176,25 @@ sub Commit {
             ) {
         $pd_action     = 'acknowledge';
         $pretty_action = 'acknowledged';
+        $rt_action     = 'updating';
     }
 
     # If $pd_action isn't set, then we have nothing to do.
     return 1 unless defined $pd_action;
 
+    my $txn_content;
     my ($result, $error) = $self->_pagerduty_submit($pd_action);
     if (! defined $result) {
-        $RT::Logger->error("Failed to raise incident on Pager Duty, error: $error");
+        $RT::Logger->error("Failed $rt_action incident on Pager Duty, error: $error");
         $pretty_action = 'rejected';
+        $txn_content = "Failed to create incident in PagerDuty: $error";
     } elsif ($result eq 'defer') {
-        $RT::Logger->info("Deferred attempting to raise incident on Pager Duty");
+        $RT::Logger->info("Pager Duty deferred $rt_action to raise incident on Pager Duty");
         $pretty_action = 'deferred';
+        $txn_content = "Response from PagerDuty: $error";
     } else {
         $RT::Logger->info("Successfully raised incident on Pager Duty, dedup_key: $result");
+        $txn_content = "Succeeded in $rt_action incident in PagerDuty";
     }
 
     # We need to give RT::Record::_NewTransaction a MIME object to have it
@@ -217,11 +224,11 @@ sub _pagerduty_submit {
     if    ($action eq 'acknowledge') {
         return ($agent->acknowledge_event(dedup_key => $dedup_key, summary => 'Ticket in RT has an owner'), $@);
 
-    elsif ($action eq 'resolve') {
+    } elsif ($action eq 'resolve') {
         return ($agent->resolve_event($dedup_key), $@);
 
-    elsif ($action eq 'trigger') {
-        return ($self->trigger_event($dedup_key, $agent), $@);
+    } elsif ($action eq 'trigger') {
+        return ($self->_trigger_event($dedup_key, $agent), $@);
     }
 }
 
@@ -249,8 +256,8 @@ sub _trigger_event {
     my $result = $agent->trigger_event(
         dedup_key => $dedup_key,
         summary   => $self->TicketObj->Subject,
-        source    => $args{queue_service}  || 'RT',
-        severity  => $args{queue_priority} || 'critical',
+        source    => $queue_service  || 'RT',
+        severity  => $queue_priority || 'critical',
         class     => 'Ticket',
         links => [
             {
