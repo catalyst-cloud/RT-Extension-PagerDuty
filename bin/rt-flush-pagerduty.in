@@ -1,0 +1,89 @@
+#!/usr/bin/perl
+### before: #!@PERL@
+
+use warnings;
+use strict;
+
+package RT::Flush::PagerDuty::Run;
+
+BEGIN {
+### after:     use lib qw(@RT_LIB_PATH@);
+use lib '/opt/rt4/local/lib /opt/rt4/lib';
+use RT;
+RT::LoadConfig;
+RT::Init;
+}
+
+use PagerDuty::Agent;
+use RT::Interface::CLI qw(GetCurrentUser);
+use RT::Ticket;
+
+__PACKAGE__->run(@ARGV) unless caller;
+
+sub run {
+    if ($opt{config}) {
+        die "Can't find configuration file $opt{config}" unless -f $opt{config};
+        no warnings 'redefine';
+        require RT::Config;
+        my $old = \&RT::Config::Configs;
+        *RT::Config::Configs = sub { return ($opt{config}, $old->(@_)) };
+    }
+
+    RT->LoadConfig;
+    RT->Init;
+    my $current_user = GetCurrentUser();
+
+    unless ( $current_user->Id ) {
+        RT->Logger->error("No RT user found. Please consult your RT administrator.");
+        exit(1);
+    }
+
+    my $spool_dir = RT->Config->Get('PagerDutySpoolDir');
+
+    if (! defined $spool_dir) {
+        RT::Logger->error("PagerDutySpoolDir is not set, nothing for me to do");
+        return 0;
+    }
+
+    my $agent = PagerDuty::Agent->new(spool => $spool_dir);
+
+    RT::Logger->info("Attempting to flush any PagerDuty notifications");
+    my %results = $agent->flush;
+
+    my $ticket = RT::Ticket->new($CurrentUser);
+    for my $dedup_key (@{ keys $results->{dedup_keys} }) {
+        my $result = $results->{dedup_keys}{$dedup_key};
+
+        (my $ticket_id = $dedup_key) =~ s/rt#//;
+        $ticket->Load($ticket_id);
+
+        if ($result eq 'defer') {
+            RT::Logger->info("PagerDuty notification for $dedup_key deferred again");
+            $pretty_action = 'deferred';
+        } elsif if ($result eq 'submitted') {
+            RT::Logger->info("PagerDuty notification for $dedup_key submitted");
+            $pretty_action = 'submitted';
+        } else {
+            RT::Logger->info("PagerDuty notification for $dedup_key rejected: $result");
+            $pretty_action = 'rejected';
+        }
+
+        # We need to give RT::Record::_NewTransaction a MIME object to have it
+        # store our content for us.
+        my $MIMEObj = MIME::Entity->build(
+            Type    => "text/plain",
+            Charset => "UTF-8",
+            Data    => [ Encode::encode("UTF-8", $txn_content) ],
+        );
+
+        $ticket->_NewTransaction(
+            Type     => 'PagerDuty',
+            NewValue => $pretty_action,
+            MIMEObj  => $MIMEObj,
+        );
+    }
+
+    RT::Logger->info("Flush run of PagerDuty notifications finished");
+}
+
+1;
