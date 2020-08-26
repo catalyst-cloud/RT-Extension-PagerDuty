@@ -20,7 +20,7 @@ when a ticket is created or updated in Request Tracker.
 
 =head1 RT VERSION
 
-Works with RT 4.4.x, not tested with 4.6.x yet.
+Works with RT 4.4.x, not tested with 5.0.x yet.
 
 =head1 INSTALLATION
 
