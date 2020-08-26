@@ -187,7 +187,7 @@ sub Commit {
     if (! defined $result) {
         $RT::Logger->error("Failed $rt_action incident on Pager Duty, error: $error");
         $pretty_action = 'rejected';
-        $txn_content = "Failed to create incident in PagerDuty: $error";
+        $txn_content = "Failed $rt_action incident in PagerDuty: $error";
     } elsif ($result eq 'defer') {
         $RT::Logger->info("Pager Duty deferred $rt_action to raise incident on Pager Duty");
         $pretty_action = 'deferred';
