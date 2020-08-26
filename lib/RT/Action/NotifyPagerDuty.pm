@@ -34,6 +34,10 @@ Works with RT 4.4.x, not tested with 5.0.x yet.
 
 May need root permissions
 
+=item C<rt-setup-database --action insert --datafile db/initialdata>
+
+May need root permissions
+
 =item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
 
 Add this line:

@@ -14,6 +14,9 @@ INSTALLATION
     make install
         May need root permissions
 
+    rt-setup-database --action insert --datafile db/initialdata
+        May need root permissions
+
     Edit your /opt/rt4/etc/RT_SiteConfig.pm
         Add this line:
 
