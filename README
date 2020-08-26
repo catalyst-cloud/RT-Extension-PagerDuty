@@ -91,7 +91,7 @@ CONFIGURATION
         rt-flush-pagerduty.
 
 AUTHOR
-    Andrew Ruthven, Catalyst Cloud Ltd <puck@catalystcloud.nz<gt>
+    Andrew Ruthven, Catalyst Cloud Ltd <puck@catalystcloud.nz>
 
     All bugs should be reported via email to
         bug-RT-Action-NotifyPagerDuty@rt.cpan.org

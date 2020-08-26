@@ -120,7 +120,7 @@ for example from cron. No arguments are required for rt-flush-pagerduty.
 
 =head1 AUTHOR
 
-Andrew Ruthven, Catalyst Cloud Ltd E<lt>puck@catalystcloud.nz<gt>
+Andrew Ruthven, Catalyst Cloud Ltd E<lt>puck@catalystcloud.nzE<gt>
 
 =for html <p>All bugs should be reported via email to <a
 href="mailto:bug-RT-Action-NotifyPagerDuty@rt.cpan.org">bug-RT-Action-NotifyPagerDuty@rt.cpan.org</a>
