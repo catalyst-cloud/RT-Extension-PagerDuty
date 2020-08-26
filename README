@@ -6,15 +6,15 @@ DESCRIPTION
     ticket is created or updated in Request Tracker.
 
 RT VERSION
-    Works with RT 4.4.x, not tested with 5.0.x yet.
+    Works with RT 4.4.x and above.
 
 INSTALLATION
-    perl Makefile.PL
-    make
-    make install
+    "perl Makefile.PL"
+    "make"
+    "make install"
         May need root permissions
 
-    rt-setup-database --action insert --datafile db/initialdata
+    "rt-setup-database --action insert --datafile db/initialdata"
         May need root permissions
 
     Edit your /opt/rt4/etc/RT_SiteConfig.pm
@@ -93,13 +93,28 @@ CONFIGURATION
         regularly, for example from cron. No arguments are required for
         rt-flush-pagerduty.
 
+    Include SubjectTag
+        Prefix the summary if the incident submitted to PagerDuty with the
+        Request Tracker SubjectTag for the queue the ticket is in. This is
+        to allow an email address for RT (either correspond or comment) in
+        the notification set within PagerDuty to allow updates from
+        PagerDuty to be added to RT.
+
+        By default this is disabled.
+
+        To enable:
+
+            Set ($PagerDutyIncludeSubjectTag, 1);
+
 AUTHOR
     Andrew Ruthven, Catalyst Cloud Ltd <puck@catalystcloud.nz>
 
-    All bugs should be reported via email to
-        bug-RT-Action-NotifyPagerDuty@rt.cpan.org
-    or via the web at
-        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+
+        All bugs should be reported via email to
+            bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+        or via the web at
+            http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+
 LICENSE AND COPYRIGHT
     This software is Copyright (c) 2019-2020 by Catalyst Cloud Ltd
 
