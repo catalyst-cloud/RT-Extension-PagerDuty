@@ -217,8 +217,12 @@ sub Commit {
 sub _pagerduty_submit {
     my ($self, $action) = @_;
     my $routing_key = RT->Config->Get('PagerDutyRoutingKey');
+    my $spool_dir   = RT->Config->Get('PagerDutySpoolDir');
 
-    my $agent     = PagerDuty::Agent->new( routing_key => $routing_key );
+    my $agent     = PagerDuty::Agent->new(
+        routing_key => $routing_key,
+        spool       => $spool_dir,
+    );
     my $dedup_key = 'rt#' . $self->TicketObj->id;
 
     if    ($action eq 'acknowledge') {
@@ -238,7 +242,8 @@ sub _trigger_event {
     my $ticket = $self->TicketObj;
     my $queue  = $ticket->QueueObj;
 
-    my $queue_priority_cf_name = RT->Config->Get('PagerDutyQueueCFPriority') || 'Incident Priority';
+    my $queue_priority_cf_name = RT->Config->Get('PagerDutyQueueCFPriority')
+                                 || 'Incident Priority';
     my $queue_priority = $queue->FirstCustomFieldValue($queue_priority_cf_name);
 
     # Set the priority to what PagerDuty supports.
@@ -250,8 +255,9 @@ sub _trigger_event {
         }
     }
 
-    my $queue_service_cf_name = RT->Config->Get('PagerDutyQueueCFService') || 'Incident Service';
-    my $queue_service = $queue->FirstCustomFieldValue($queue_service_cf_name);
+    my $queue_service_cf_name  = RT->Config->Get('PagerDutyQueueCFService')
+                                 || 'Incident Service';
+    my $queue_service  = $queue->FirstCustomFieldValue($queue_service_cf_name);
 
     my $result = $agent->trigger_event(
         dedup_key => $dedup_key,
