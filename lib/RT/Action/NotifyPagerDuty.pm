@@ -100,6 +100,22 @@ change that with:
 
 If no service is defined, then RT is used.
 
+=item Spool
+
+A directory to spool submissions if PagerDuty have sent us a response
+deferring our submission. This directory will need to be writable by
+the process that is running Request Tracker (for example www-data).
+
+By default it is unset, so if a submission is deferred it will be
+deleted.
+
+To set:
+
+    Set ($PagerDutySpoolDir, '/opt/rt4/spool/pagerduty');
+
+If you spool submissions then you should run rt-flush-pagerduty regularly,
+for example from cron. No arguments are required for rt-flush-pagerduty.
+
 =back
 
 =head1 AUTHOR
