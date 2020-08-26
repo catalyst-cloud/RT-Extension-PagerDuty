@@ -111,9 +111,9 @@ AUTHOR
 
 
         All bugs should be reported via email to
-            bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+            bug-RT-Extension-PagerDuty@rt.cpan.org
         or via the web at
-            http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+            http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-PagerDuty
 
 LICENSE AND COPYRIGHT
     This software is Copyright (c) 2019-2020 by Catalyst Cloud Ltd

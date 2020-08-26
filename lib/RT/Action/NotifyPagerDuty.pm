@@ -141,16 +141,16 @@ To enable:
 Andrew Ruthven, Catalyst Cloud Ltd E<lt>puck@catalystcloud.nzE<gt>
 
 =for html <p>All bugs should be reported via email to <a
-href="mailto:bug-RT-Action-NotifyPagerDuty@rt.cpan.org">bug-RT-Action-NotifyPagerDuty@rt.cpan.org</a>
+href="mailto:bug-RT-Extension-PagerDuty@rt.cpan.org">bug-RT-Extension-PagerDuty@rt.cpan.org</a>
 or via the web at <a
-href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty">rt.cpan.org</a>.</p>
+href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-PagerDuty">rt.cpan.org</a>.</p>
 
 =for text
 
     All bugs should be reported via email to
-        bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+        bug-RT-Extension-PagerDuty@rt.cpan.org
     or via the web at
-        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-PagerDuty
 
 =head1 LICENSE AND COPYRIGHT
 
