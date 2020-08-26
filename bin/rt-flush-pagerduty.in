@@ -21,13 +21,7 @@ use RT::Ticket;
 __PACKAGE__->run(@ARGV) unless caller;
 
 sub run {
-    if ($opt{config}) {
-        die "Can't find configuration file $opt{config}" unless -f $opt{config};
-        no warnings 'redefine';
-        require RT::Config;
-        my $old = \&RT::Config::Configs;
-        *RT::Config::Configs = sub { return ($opt{config}, $old->(@_)) };
-    }
+    my ($class, @args) = @_;
 
     RT->LoadConfig;
     RT->Init;
@@ -48,28 +42,31 @@ sub run {
     my $agent = PagerDuty::Agent->new(spool => $spool_dir);
 
     RT::Logger->info("Attempting to flush any PagerDuty notifications");
-    my %results = $agent->flush;
+    my $results = $agent->flush;
+use Data::Dumper;
+print Dumper($results);
 
-    my $ticket = RT::Ticket->new($CurrentUser);
-    for my $dedup_key (@{ keys $results->{dedup_keys} }) {
-        my $result = $results->{dedup_keys}{$dedup_key};
+    my $ticket = RT::Ticket->new($current_user);
+    for my $submission (@{$results->{dedup_keys}}) {
+        my $dedup_key = $submission->[0];
+        my $result    = $submission->[1];
 
         (my $ticket_id = $dedup_key) =~ s/rt#//;
         $ticket->Load($ticket_id);
 
-        my $txn_content;
+        my ($pretty_action, $txn_content);
         if ($result eq 'defer') {
             RT::Logger->info("PagerDuty notification for $dedup_key deferred again");
             $pretty_action = 'deferred';
-            $txn_content = "Failed $rt_action incident in PagerDuty, deferred again";
-        } elsif if ($result eq 'submitted') {
+            $txn_content = "Failed creating/updating incident in PagerDuty, deferred again";
+        } elsif ($result eq 'submitted') {
             RT::Logger->info("PagerDuty notification for $dedup_key submitted");
             $pretty_action = 'submitted';
-            $txn_content = "Succeeded in $rt_action incident in PagerDuty";
+            $txn_content = "Succeeded in creating/updating incident in PagerDuty";
         } else {
             RT::Logger->info("PagerDuty notification for $dedup_key rejected: $result");
             $pretty_action = 'rejected';
-            $txn_content = "Failed $rt_action incident in PagerDuty, rejected.";
+            $txn_content = "Failed creating/updating incident in PagerDuty, rejected.";
         }
 
         # We need to give RT::Record::_NewTransaction a MIME object to have it
