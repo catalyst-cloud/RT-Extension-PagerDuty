@@ -43,8 +43,6 @@ sub run {
 
     RT::Logger->info("Attempting to flush any PagerDuty notifications");
     my $results = $agent->flush;
-use Data::Dumper;
-print Dumper($results);
 
     my $ticket = RT::Ticket->new($current_user);
     for my $submission (@{$results->{dedup_keys}}) {
