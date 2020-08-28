@@ -204,6 +204,7 @@ sub Commit {
     } elsif ($txnObj->Type eq 'Set'
              && $txnObj->Field eq 'Owner'
              && $txnObj->NewValue != $RT::SystemUser->id
+             && $txnObj->NewValue != $RT::Nobody->id
             ) {
         $pd_action     = 'acknowledge';
         $pretty_action = 'acknowledged';
