@@ -52,7 +52,28 @@ CONFIGURATION
     Currently you can set the PagerDuty priority and services to be used via
     Queue CustomFields.
 
-    Priority
+    AcknowledgeOnTake
+        Should the incident in PagerDuty be acknowledged if the ticket in RT
+        is Taken? Allow values: 0 or 1.
+
+        Defaults to 1.
+
+        To disable:
+
+            Set ($PagerDutyAcknowledgeOnTake, 0);
+
+    QueueCFAcknowledgeOnTake
+        Allow the global AcknowledgeOnTake setting to be overridden by
+        queue.
+
+        By default the Queue CustomField is named "Incident Acknowledge On
+        Take", but you can this with:
+
+            Set ($PagerDutyQueueCFAcknowledgeOnTake, 'Incident Acknowledge On Take');
+
+        The allow values are: 1 or 0.
+
+    QueueCFPriority
         The PagerDuty incident priority which this incident will be created
         using.
 
@@ -66,7 +87,7 @@ CONFIGURATION
         If no priority is set, or an invalid value is used, critical will be
         used.
 
-    Service
+    QueueCFService
         The PagerDuty service which this incident will be created using.
 
         By default the Queue CustomField is named "Incident Service", but

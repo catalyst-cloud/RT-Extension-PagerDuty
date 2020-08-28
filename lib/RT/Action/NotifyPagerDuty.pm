@@ -80,7 +80,29 @@ via Queue CustomFields.
 
 =over
 
-=item Priority
+=item AcknowledgeOnTake
+
+Should the incident in PagerDuty be acknowledged if the ticket in RT
+is Taken? Allow values: 0 or 1.
+
+Defaults to 1.
+
+To disable:
+
+    Set ($PagerDutyAcknowledgeOnTake, 0);
+
+=item QueueCFAcknowledgeOnTake
+
+Allow the global AcknowledgeOnTake setting to be overridden by queue.
+
+By default the Queue CustomField is named "Incident Acknowledge On Take",
+but you can this with:
+
+    Set ($PagerDutyQueueCFAcknowledgeOnTake, 'Incident Acknowledge On Take');
+
+The allow values are: 1 or 0.
+
+=item QueueCFPriority
 
 The PagerDuty incident priority which this incident will be created using.
 
@@ -93,7 +115,7 @@ The allowed values are: critical, warning, error, or info.
 
 If no priority is set, or an invalid value is used, critical will be used.
 
-=item Service
+=item QueueCFService
 
 The PagerDuty service which this incident will be created using.
 
@@ -185,6 +207,23 @@ sub Commit {
     #  - new, trigger an incident;
     #  - resolved, rejected or deleted, , resolve an incident;
     # If the owner is set, acknowledge the incident.
+
+    # Should we Acknowledge an incident with a ticket in RT is taken?
+    # Defaults to enabled.
+    my $ticket = $self->TicketObj;
+    my $queue  = $ticket->QueueObj;
+    my $acknowledge_on_take = RT->Config->Get('PagerDutyAcknowledgeOnTake')
+                              // 1;
+
+    # Allow acknowledge_on_take to be overridden on a per Queue basis.
+    my $queue_acknowledge_on_take_cf_name =
+        RT->Config->Get('PagerDutyQueueCFAcknowledgeOnTake')
+        || 'Incident Acknowledge On Take';
+    my $q_acknowledge_on_take =
+        $queue->FirstCustomFieldValue($queue_acknowledge_on_take_cf_name);
+    $acknowledge_on_take = $q_acknowledge_on_take
+        if defined $q_acknowledge_on_take;
+
     my ($pd_action, $pretty_action, $rt_action);
     my $txnObj = $self->TransactionObj;
 
@@ -202,6 +241,7 @@ sub Commit {
         $rt_action     = 'updating';
 
     } elsif ($txnObj->Type eq 'Set'
+	     && $acknowledge_on_take
              && $txnObj->Field eq 'Owner'
              && $txnObj->NewValue != $RT::SystemUser->id
              && $txnObj->NewValue != $RT::Nobody->id
