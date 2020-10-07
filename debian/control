@@ -1,0 +1,18 @@
+Source: rt-extension-pagerduty
+Section: perl
+Priority: optional
+Maintainer: Andrew Ruthven <andrew@etc.gen.nz>
+Build-Depends: debhelper (>= 9.20120312)
+Build-Depends-Indep: perl
+Standards-Version: 3.9.8
+Homepage: https://github.com/catalyst-cloud/RT-Extension-PagerDuty
+
+Package: rt4-extension-pagerduty
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends},
+ request-tracker4,
+ perl,
+Description: PagerDuty extension (Request Tracker)
+ This extension adds the ability to interact with PagerDuty. Currently
+ it can create events, acknowledge and resolve them based on the status
+ changes within Request Tracker.

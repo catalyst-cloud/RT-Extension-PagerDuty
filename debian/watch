@@ -1,0 +1,2 @@
+version=3
+https://metacpan.org/release/RT-Extension-PagerDuty   .*/RT-Extension-PagerDuty-v?(\d[\d.-]*)\.(?:tar(?:\.gz|\.bz2)?|tgz|zip)$

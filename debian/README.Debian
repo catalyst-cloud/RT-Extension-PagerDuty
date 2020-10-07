@@ -1,0 +1,6 @@
+See upstream README file for configuration and usage instruction.
+Almost all information from that file is relevant.  However, from
+the section "INSTALLATION", only the steps following, but not
+including make install are relevant.
+
+ -- Andrew Ruthven <puck@catalystcloud.nz>  Thu, 21 Mar 2018 06:38:28 +0000
