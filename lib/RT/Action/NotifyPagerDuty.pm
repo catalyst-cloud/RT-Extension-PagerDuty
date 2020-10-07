@@ -20,7 +20,7 @@ when a ticket is created or updated in Request Tracker.
 
 =head1 RT VERSION
 
-Works with RT 4.4.x, not tested with 5.0.x yet.
+Works with RT 4.4.x and above.
 
 =head1 INSTALLATION
 
@@ -80,7 +80,29 @@ via Queue CustomFields.
 
 =over
 
-=item Priority
+=item AcknowledgeOnTake
+
+Should the incident in PagerDuty be acknowledged if the ticket in RT
+is Taken? Allow values: 0 or 1.
+
+Defaults to 1.
+
+To disable:
+
+    Set ($PagerDutyAcknowledgeOnTake, 0);
+
+=item QueueCFAcknowledgeOnTake
+
+Allow the global AcknowledgeOnTake setting to be overridden by queue.
+
+By default the Queue CustomField is named "Incident Acknowledge On Take",
+but you can this with:
+
+    Set ($PagerDutyQueueCFAcknowledgeOnTake, 'Incident Acknowledge On Take');
+
+The allow values are: 1 or 0.
+
+=item QueueCFPriority
 
 The PagerDuty incident priority which this incident will be created using.
 
@@ -93,7 +115,7 @@ The allowed values are: critical, warning, error, or info.
 
 If no priority is set, or an invalid value is used, critical will be used.
 
-=item Service
+=item QueueCFService
 
 The PagerDuty service which this incident will be created using.
 
@@ -120,6 +142,20 @@ To set:
 If you spool submissions then you should run rt-flush-pagerduty regularly,
 for example from cron. No arguments are required for rt-flush-pagerduty.
 
+=item Include SubjectTag
+
+Prefix the summary if the incident submitted to PagerDuty with the
+Request Tracker SubjectTag for the queue the ticket is in. This is
+to allow an email address for RT (either correspond or comment) in the
+notification set within PagerDuty to allow updates from PagerDuty to
+be added to RT.
+
+By default this is disabled.
+
+To enable:
+
+    Set ($PagerDutyIncludeSubjectTag, 1);
+
 =back
 
 =head1 AUTHOR
@@ -127,15 +163,16 @@ for example from cron. No arguments are required for rt-flush-pagerduty.
 Andrew Ruthven, Catalyst Cloud Ltd E<lt>puck@catalystcloud.nzE<gt>
 
 =for html <p>All bugs should be reported via email to <a
-href="mailto:bug-RT-Action-NotifyPagerDuty@rt.cpan.org">bug-RT-Action-NotifyPagerDuty@rt.cpan.org</a>
+href="mailto:bug-RT-Extension-PagerDuty@rt.cpan.org">bug-RT-Extension-PagerDuty@rt.cpan.org</a>
 or via the web at <a
-href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty">rt.cpan.org</a>.</p>
+href="http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-PagerDuty">rt.cpan.org</a>.</p>
 
 =for text
+
     All bugs should be reported via email to
-        bug-RT-Action-NotifyPagerDuty@rt.cpan.org
+        bug-RT-Extension-PagerDuty@rt.cpan.org
     or via the web at
-        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Action-NotifyPagerDuty
+        http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-PagerDuty
 
 =head1 LICENSE AND COPYRIGHT
 
@@ -170,6 +207,23 @@ sub Commit {
     #  - new, trigger an incident;
     #  - resolved, rejected or deleted, , resolve an incident;
     # If the owner is set, acknowledge the incident.
+
+    # Should we Acknowledge an incident with a ticket in RT is taken?
+    # Defaults to enabled.
+    my $ticket = $self->TicketObj;
+    my $queue  = $ticket->QueueObj;
+    my $acknowledge_on_take = RT->Config->Get('PagerDutyAcknowledgeOnTake')
+                              // 1;
+
+    # Allow acknowledge_on_take to be overridden on a per Queue basis.
+    my $queue_acknowledge_on_take_cf_name =
+        RT->Config->Get('PagerDutyQueueCFAcknowledgeOnTake')
+        || 'Incident Acknowledge On Take';
+    my $q_acknowledge_on_take =
+        $queue->FirstCustomFieldValue($queue_acknowledge_on_take_cf_name);
+    $acknowledge_on_take = $q_acknowledge_on_take
+        if defined $q_acknowledge_on_take;
+
     my ($pd_action, $pretty_action, $rt_action);
     my $txnObj = $self->TransactionObj;
 
@@ -187,8 +241,10 @@ sub Commit {
         $rt_action     = 'updating';
 
     } elsif ($txnObj->Type eq 'Set'
+	     && $acknowledge_on_take
              && $txnObj->Field eq 'Owner'
              && $txnObj->NewValue != $RT::SystemUser->id
+             && $txnObj->NewValue != $RT::Nobody->id
             ) {
         $pd_action     = 'acknowledge';
         $pretty_action = 'acknowledged';
@@ -275,9 +331,17 @@ sub _trigger_event {
                                  || 'Incident Service';
     my $queue_service  = $queue->FirstCustomFieldValue($queue_service_cf_name);
 
+    # Should we include the SubjectTag in the incident raised in PagerDuty?
+    # This will allow emails out of PagerDuty to be added to a ticket in RT.
+    my $include_subject_tag = RT->Config->Get('PagerDutyIncludeSubjectTag')
+                              || 0;
+
     my $result = $agent->trigger_event(
         dedup_key => $dedup_key,
-        summary   => $self->TicketObj->Subject,
+        summary   => ($include_subject_tag
+                         ? $self->TicketObj->SubjectTag . ' '
+                         : ''
+                     ) . $self->TicketObj->Subject,
         source    => $queue_service  || 'RT',
         severity  => $queue_priority || 'critical',
         class     => 'Ticket',

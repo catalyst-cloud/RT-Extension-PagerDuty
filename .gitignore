@@ -6,8 +6,8 @@ pm_to_blib*
 .lwpcookies
 cover_db
 pod2htm*.tmp
-META.yml
-/RT-Extension-Notify-PagerDuty*
+/RT-Extension-Action-NotifyPagerDuty*
+bin/rt-flush-pagerduty
 *.bak
 *.swp
 /MYMETA.*
