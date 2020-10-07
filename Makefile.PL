@@ -11,7 +11,8 @@ requires_rt '4.4.0';
 
 my ($lp) = ($INC{'RT.pm'} =~ /^(.*)[\\\/]/);
 my $lib_path = join( ' ', "$RT::LocalPath/lib", $lp );
-my $bin_path = $RT::BinPath || "$RT::BasePath/bin" || "/opt/rt4/bin";
+my $bin_path =  $RT::BinPath || "$RT::BasePath/bin"
+             || '/opt/rt5/bin' || '/opt/rt4/bin';
 
 # Straight from perldoc perlvar
 use Config;
