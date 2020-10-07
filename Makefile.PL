@@ -3,7 +3,6 @@ use inc::Module::Install;
 RTx        'RT-Action-NotifyPagerDuty';
 license    'gpl_2';
 repository 'https://github.com/catalyst-cloud/RT-Extension-PagerDuty';
-install_script 'bin/rt-flush-pagerduty';
 
 requires   'Agent::PagerDuty' => '0.03';
 
@@ -11,7 +10,8 @@ requires_rt '4.4.0';
 
 my ($lp) = ($INC{'RT.pm'} =~ /^(.*)[\\\/]/);
 my $lib_path = join( ' ', "$RT::LocalPath/lib", $lp );
-my $bin_path = $RT::BinPath || "$RT::BasePath/bin" || "/opt/rt4/bin";
+my $bin_path =  $RT::BinPath || "$RT::BasePath/bin"
+             || '/opt/rt5/bin' || '/opt/rt4/bin';
 
 # Straight from perldoc perlvar
 use Config;
@@ -32,6 +32,8 @@ substitute(
     },
     qw(bin/rt-flush-pagerduty),
 );
+
+install_script 'bin/rt-flush-pagerduty';
 
 sign;
 WriteAll;
