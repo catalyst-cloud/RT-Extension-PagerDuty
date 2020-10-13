@@ -1,3 +1,3 @@
 lib usr/share/request-tracker4/plugins/RT-Extension-PagerDuty
-
+bin/rt-flush-pagerduty-4 usr/bin
 

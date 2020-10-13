@@ -13,7 +13,11 @@ override_dh_auto_build:
 override_dh_auto_test:
 
 override_dh_install:
+	mv bin/rt-flush-pagerduty bin/rt-flush-pagerduty-4
 	dh_install -X *.in
+
+#override_dh_auto_build-indep:
+#	dh_auto_build
 
 # don't run the dh auto install command (we use debian/install)
 override_dh_auto_install-indep:

@@ -1,0 +1,13 @@
+#! /bin/sh
+set -e
+
+alts() {
+    update-alternatives --remove rt-flush-pagerduty /usr/bin/rt-flush-pagerduty-4
+}
+
+case "$1" in
+    "remove") alts
+        ;;
+esac
+
+#DEBHELPER#

@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+alts() {
+    update-alternatives \
+      --install /usr/bin/rt-flush-pagerduty rt-flush-pagerduty /usr/bin/rt-flush-pagerduty-4 100
+}
+
+case "$1" in
+    configure)
+        alts
+        ;;
+    abort-upgrade)
+        alts
+        ;;
+esac
+
+#DEBHELPER#
+
