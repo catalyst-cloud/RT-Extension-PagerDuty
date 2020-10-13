@@ -3,4 +3,9 @@ Almost all information from that file is relevant.  However, from
 the section "INSTALLATION", only the steps following, but not
 including make install are relevant.
 
- -- Andrew Ruthven <puck@catalystcloud.nz>  Thu, 21 Mar 2018 06:38:28 +0000
+To load the initialdata to the database, you can use:
+
+  rt-setup-database --action insert --datafile \
+    /usr/share/request-tracker4/plugins/RT-Extension-PagerDuty/etc/initialdata
+
+ -- Andrew Ruthven <puck@catalystcloud.nz>  Tue, 13 Oct 2020 19:24:28 +1300
