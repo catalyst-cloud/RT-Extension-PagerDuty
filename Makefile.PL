@@ -3,6 +3,8 @@ use inc::Module::Install;
 RTx        'RT-Action-NotifyPagerDuty';
 license    'gpl_2';
 repository 'https://github.com/catalyst-cloud/RT-Extension-PagerDuty';
+readme_from    'lib/RT/Action/NotifyPagerDuty.pm';
+install_script 'bin/rt-flush-pagerduty';
 
 requires   'Agent::PagerDuty' => '0.03';
 
